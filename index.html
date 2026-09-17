@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ProductForge — Turn Product Photos Into Store-Ready Visuals</title>
+<meta name="description" content="ProductForge turns ordinary product photos into professional e-commerce visuals using real AI image generation." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23C97D3E%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============ Tokens ============ */
+  :root{
+    --bg:#14110D;
+    --surface:#1E1A15;
+    --surface-2:#262019;
+    --surface-3:#2E271F;
+    --border:#3A332A;
+    --text:#F1ECE3;
+    --text-dim:#A79C8C;
+    --text-faint:#776E60;
+    --accent:#C97D3E;
+    --accent-strong:#E39257;
+    --accent-2:#5C8A85;
+    --danger:#C2564A;
+    --success:#6E9A6B;
+    --radius-s:6px;
+    --radius-m:12px;
+    --radius-l:22px;
+    --font-display:'Space Grotesk', 'Inter', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --maxw:1180px;
+    --shadow-1: 0 1px 2px rgba(0,0,0,.4);
+    --shadow-2: 0 12px 32px rgba(0,0,0,.45);
+    --shadow-3: 0 24px 64px rgba(0,0,0,.55);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  img,svg{display:block; max-width:100%;}
+  a{color:inherit;}
+  button{font-family:inherit;}
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 24px;}
+  h1,h2,h3{font-family:var(--font-display); margin:0; letter-spacing:-0.01em;}
+  p{margin:0;}
+  :focus-visible{outline:2px solid var(--accent-strong); outline-offset:2px;}
+  ::selection{background:var(--accent); color:#14110D;}
+
+  /* ============ Layout shell ============ */
+  .view{display:none;}
+  .view.active{display:block;}
+
+  header.nav{
+    position:sticky; top:0; z-index:40;
+    background:rgba(20,17,13,.86);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+  }
+  .nav-row{display:flex; align-items:center; justify-content:space-between; height:68px;}
+  .brand{display:flex; align-items:center; gap:10px; font-family:var(--font-display); font-weight:600; font-size:20px; text-decoration:none;}
+  .brand-mark{width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg, var(--accent), var(--accent-2)); flex-shrink:0;}
+  nav.links{display:flex; gap:28px; font-size:14.5px; color:var(--text-dim);}
+  nav.links a{text-decoration:none; transition:color .15s;}
+  nav.links a:hover{color:var(--text);}
+  .nav-cta{display:flex; gap:10px;}
+
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:11px 20px; border-radius:999px; border:1px solid transparent;
+    font-size:14.5px; font-weight:600; cursor:pointer; text-decoration:none;
+    transition:transform .15s, background .15s, border-color .15s, opacity .15s;
+    white-space:nowrap;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{background:var(--accent); color:#1A140C;}
+  .btn-primary:hover{background:var(--accent-strong);}
+  .btn-ghost{background:transparent; color:var(--text); border-color:var(--border);}
+  .btn-ghost:hover{border-color:var(--text-dim);}
+  .btn-sm{padding:8px 14px; font-size:13.5px;}
+  .btn:disabled{opacity:.5; cursor:not-allowed; transform:none;}
+
+  section{padding:96px 0;}
+  @media (max-width:760px){ section{padding:56px 0;} }
+
+  .eyebrow-tag{
+    display:inline-block; font-size:13px; color:var(--accent-strong);
+    background:rgba(201,125,62,.12); border:1px solid rgba(201,125,62,.3);
+    padding:6px 14px; border-radius:999px; margin-bottom:20px;
+  }
+
+  /* ============ Hero ============ */
+  .hero{padding-top:72px; padding-bottom:72px;}
+  .hero-grid{display:grid; grid-template-columns:1.05fr 0.95fr; gap:56px; align-items:center;}
+  @media (max-width:900px){ .hero-grid{grid-template-columns:1fr;} }
+  .hero h1{font-size:clamp(34px, 5vw, 58px); line-height:1.05; font-weight:600;}
+  .hero p.sub{margin-top:20px; font-size:18px; color:var(--text-dim); max-width:46ch;}
+  .hero-actions{display:flex; gap:14px; margin-top:34px; flex-wrap:wrap;}
+
+  .stage{
+    position:relative; height:420px; perspective:1200px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .stage-card{
+    width:280px; height:340px; border-radius:var(--radius-l);
+    background:linear-gradient(155deg, var(--surface-3), var(--surface));
+    border:1px solid var(--border);
+    box-shadow:var(--shadow-3);
+    transform-style:preserve-3d;
+    transition:transform .12s ease-out;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:18px;
+    position:relative;
+  }
+  .stage-product{
+    width:120px; height:150px; border-radius:14px;
+    background:linear-gradient(160deg, var(--accent-strong), var(--accent));
+    box-shadow:0 20px 40px rgba(201,125,62,.35);
+    transform:translateZ(40px);
+  }
+  .stage-ring{
+    position:absolute; width:200px; height:36px; bottom:34px; left:50%;
+    transform:translateX(-50%) translateZ(-10px);
+    background:radial-gradient(closest-side, rgba(0,0,0,.55), transparent 70%);
+    filter:blur(2px);
+  }
+  .stage-chip{
+    position:absolute; padding:8px 14px; border-radius:999px; font-size:12.5px;
+    background:var(--surface-2); border:1px solid var(--border); color:var(--text-dim);
+    box-shadow:var(--shadow-1);
+  }
+  .stage-chip.c1{top:18px; left:-6px; transform:translateZ(60px);}
+  .stage-chip.c2{bottom:56px; right:-14px; transform:translateZ(70px);}
+  @media (max-width:900px){ .stage{height:300px;} .stage-card{width:220px; height:260px;} }
+
+  /* ============ Feature grid ============ */
+  .section-head{max-width:640px; margin-bottom:48px;}
+  .section-head h2{font-size:clamp(26px,3.4vw,38px); font-weight:600;}
+  .section-head p{margin-top:14px; color:var(--text-dim); font-size:16px;}
+
+  .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:20px;}
+  @media (max-width:820px){ .grid-3{grid-template-columns:1fr;} }
+  .feature-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-m);
+    padding:26px; display:flex; flex-direction:column; gap:12px;
+  }
+  .feature-icon{width:38px; height:38px; border-radius:10px; background:var(--surface-3); display:flex; align-items:center; justify-content:center; color:var(--accent-strong);}
+  .feature-card h3{font-size:17px; font-weight:600;}
+  .feature-card p{color:var(--text-dim); font-size:14.5px;}
+
+  /* ============ How it works ============ */
+  .steps{display:grid; grid-template-columns:repeat(4,1fr); gap:24px;}
+  @media (max-width:820px){ .steps{grid-template-columns:1fr 1fr;} }
+  .step{display:flex; flex-direction:column; gap:10px;}
+  .step-num{font-family:var(--font-display); font-size:15px; color:var(--accent-strong); border:1px solid var(--border); width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;}
+  .step h3{font-size:16px; font-weight:600;}
+  .step p{color:var(--text-dim); font-size:14px;}
+
+  /* ============ Use cases ============ */
+  .chips-row{display:flex; flex-wrap:wrap; gap:12px;}
+  .usecase-chip{padding:12px 20px; border:1px solid var(--border); border-radius:999px; color:var(--text-dim); font-size:14.5px; background:var(--surface);}
+
+  /* ============ Before/After ============ */
+  .compare{
+    position:relative; border-radius:var(--radius-l); overflow:hidden; border:1px solid var(--border);
+    height:380px; background:var(--surface);
+  }
+  .compare-layer{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:15px; color:var(--text-faint);}
+  .compare-before{background:linear-gradient(135deg,#2b241c,#1c1712);}
+  .compare-after{background:linear-gradient(135deg,#20342f,#1a2a26); clip-path:inset(0 50% 0 0);}
+  .compare-handle{position:absolute; top:0; bottom:0; left:50%; width:2px; background:var(--accent-strong); cursor:ew-resize;}
+  .compare-handle::after{content:'⇔'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:38px; height:38px; background:var(--accent-strong); color:#1A140C; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px;}
+  .compare-tag{position:absolute; top:16px; font-size:12.5px; padding:5px 12px; border-radius:999px; background:rgba(0,0,0,.4);}
+  .compare-tag.left{left:16px;} .compare-tag.right{right:16px;}
+
+  /* ============ Campaign band ============ */
+  .campaign-band{
+    background:linear-gradient(120deg, var(--surface-2), var(--surface));
+    border:1px solid var(--border); border-radius:var(--radius-l);
+    padding:48px; display:grid; grid-template-columns:1.1fr 0.9fr; gap:36px; align-items:center;
+  }
+  @media (max-width:820px){ .campaign-band{grid-template-columns:1fr; padding:28px;} }
+  .campaign-visual{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  .campaign-tile{aspect-ratio:1; border-radius:10px; background:var(--surface-3); border:1px solid var(--border);}
+  .campaign-tile:nth-child(1){background:linear-gradient(160deg,var(--accent),var(--accent-strong));}
+  .campaign-tile:nth-child(4){background:linear-gradient(160deg,var(--accent-2),#3d5f5b);}
+
+  /* ============ Final CTA ============ */
+  .final-cta{text-align:center; padding:88px 0;}
+  .final-cta h2{font-size:clamp(28px,4vw,44px); font-weight:600; max-width:20ch; margin:0 auto;}
+  .final-cta .btn{margin-top:30px;}
+
+  footer{border-top:1px solid var(--border); padding:36px 0; color:var(--text-faint); font-size:13.5px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px;}
+
+  /* ============ Studio ============ */
+  .studio-shell{display:grid; grid-template-columns:340px 1fr; gap:0; min-height:calc(100vh - 68px);}
+  @media (max-width:980px){ .studio-shell{grid-template-columns:1fr;} }
+
+  .studio-controls{
+    border-right:1px solid var(--border); padding:28px 22px; overflow-y:auto;
+    max-height:calc(100vh - 68px);
+  }
+  @media (max-width:980px){ .studio-controls{max-height:none; border-right:none; border-bottom:1px solid var(--border);} }
+
+  .ctrl-group{margin-bottom:26px;}
+  .ctrl-group > label.title{display:block; font-size:13px; font-weight:600; color:var(--text-dim); margin-bottom:10px; text-transform:none;}
+  .option-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .option-pill{
+    padding:9px 10px; border-radius:var(--radius-s); border:1px solid var(--border); background:var(--surface);
+    font-size:13px; color:var(--text-dim); cursor:pointer; text-align:left; transition:border-color .15s, color .15s, background .15s;
+  }
+  .option-pill:hover{color:var(--text); border-color:var(--text-dim);}
+  .option-pill.active{border-color:var(--accent-strong); color:var(--text); background:rgba(201,125,62,.12);}
+
+  select, textarea, input[type=text]{
+    width:100%; background:var(--surface); border:1px solid var(--border); color:var(--text);
+    padding:10px 12px; border-radius:var(--radius-s); font-size:14px; font-family:inherit;
+  }
+  textarea{resize:vertical; min-height:70px;}
+  input[type=color]{width:44px; height:34px; border:1px solid var(--border); border-radius:6px; background:none; padding:2px;}
+  .field-row{display:flex; gap:10px; align-items:center;}
+  .char-count{font-size:12px; color:var(--text-faint); margin-top:4px; text-align:right;}
+
+  .upload-area{
+    border:1.5px dashed var(--border); border-radius:var(--radius-m); padding:28px 16px;
+    text-align:center; cursor:pointer; transition:border-color .15s, background .15s;
+  }
+  .upload-area:hover, .upload-area.drag{border-color:var(--accent-strong); background:rgba(201,125,62,.06);}
+  .upload-area p{font-size:13.5px; color:var(--text-dim);}
+  .upload-meta{margin-top:10px; font-size:12.5px; color:var(--text-faint);}
+
+  .studio-main{padding:28px 32px; overflow-y:auto; max-height:calc(100vh - 68px);}
+  @media (max-width:980px){ .studio-main{max-height:none;} }
+
+  .preview-panel{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-l);
+    min-height:420px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:16px;
+    padding:24px; position:relative; overflow:hidden;
+  }
+  .preview-panel img{max-height:520px; border-radius:var(--radius-m);}
+  .preview-empty{color:var(--text-faint); font-size:14.5px; text-align:center; max-width:32ch;}
+
+  .progress-wrap{display:flex; flex-direction:column; align-items:center; gap:14px;}
+  .spinner{width:34px; height:34px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--accent-strong); animation:spin 0.9s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @media (prefers-reduced-motion: reduce){ .spinner{animation-duration:1.8s;} .stage-card{transition:none;} }
+
+  .result-actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:18px;}
+
+  .usage-badge{
+    display:inline-flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text-dim);
+    border:1px solid var(--border); padding:7px 13px; border-radius:999px; margin-bottom:20px;
+  }
+  .usage-dot{width:7px; height:7px; border-radius:50%; background:var(--success);}
+  .usage-dot.limited{background:var(--danger);}
+
+  .tabbar{display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;}
+  .tab-btn{padding:9px 16px; border-radius:999px; border:1px solid var(--border); background:transparent; color:var(--text-dim); font-size:13.5px; cursor:pointer;}
+  .tab-btn.active{background:var(--surface-2); color:var(--text); border-color:var(--text-dim);}
+
+  .gallery{display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:14px; margin-top:20px;}
+  .gallery-item{border:1px solid var(--border); border-radius:var(--radius-m); overflow:hidden; background:var(--surface);}
+  .gallery-item img{width:100%; aspect-ratio:1; object-fit:cover;}
+  .gallery-item .meta{padding:8px 10px; font-size:11.5px; color:var(--text-faint); display:flex; justify-content:space-between;}
+
+  .history-list{display:flex; flex-direction:column; gap:8px; margin-top:14px;}
+  .history-row{display:flex; align-items:center; gap:12px; padding:8px; border:1px solid var(--border); border-radius:var(--radius-s); background:var(--surface);}
+  .history-row img{width:44px; height:44px; object-fit:cover; border-radius:6px;}
+  .history-row .info{flex:1; font-size:12.5px; color:var(--text-dim);}
+  .history-row .row-actions{display:flex; gap:6px;}
+  .icon-btn{background:none; border:1px solid var(--border); color:var(--text-dim); border-radius:6px; padding:5px 9px; font-size:12px; cursor:pointer;}
+  .icon-btn:hover{color:var(--text); border-color:var(--text-dim);}
+
+  .studio-compare-slider{position:relative; width:100%; border-radius:var(--radius-m); overflow:hidden;}
+  .studio-compare-slider img{width:100%; display:block;}
+  .studio-compare-slider .after-wrap{position:absolute; inset:0; overflow:hidden;}
+  .studio-compare-range{width:100%; margin-top:10px;}
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    background:var(--surface-3); border:1px solid var(--border); color:var(--text);
+    padding:12px 20px; border-radius:999px; font-size:13.5px; box-shadow:var(--shadow-2);
+    z-index:100; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
+  .toast.error{border-color:var(--danger);}
+
+  .small-note{font-size:12px; color:var(--text-faint); margin-top:8px;}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-row">
+    <a href="#/" class="brand"><span class="brand-mark"></span>ProductForge</a>
+    <nav class="links" id="landing-links">
+      <a href="#/studio">Studio</a>
+      <a href="#features">Features</a>
+      <a href="#how-it-works">How It Works</a>
+      <a href="#use-cases">Use Cases</a>
+      <a href="#about">About</a>
+    </nav>
+    <div class="nav-cta">
+      <a href="#/studio" class="btn btn-primary btn-sm">Create Product Images</a>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== LANDING ===================== -->
+<main id="view-landing" class="view">
+
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow-tag">AI Product Studio</span>
+        <h1>Turn Simple Product Photos Into Store-Ready Visuals.</h1>
+        <p class="sub">ProductForge takes an ordinary photo of your product and generates professional e-commerce scenes around it — new backgrounds, lighting and compositions — using real AI image generation, not a template.</p>
+        <div class="hero-actions">
+          <a href="#/studio" class="btn btn-primary">Start Creating</a>
+          <a href="#how-it-works" class="btn btn-ghost">See How It Works</a>
+        </div>
+      </div>
+      <div class="stage" id="hero-stage">
+        <div class="stage-card" id="stage-card">
+          <div class="stage-chip c1">Studio lighting</div>
+          <div class="stage-product"></div>
+          <div class="stage-ring"></div>
+          <div class="stage-chip c2">4:5 export</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Everything a product photo needs, generated.</h2>
+        <p>One upload becomes scenes, lighting setups and marketing creative — all built for how buyers actually shop online.</p>
+      </div>
+      <div class="grid-3">
+        <div class="feature-card"><div class="feature-icon">◆</div><h3>AI Product Scenes</h3><p>Place your product in studio, luxury or minimal environments while keeping its shape, color and branding intact.</p></div>
+        <div class="feature-card"><div class="feature-icon">◇</div><h3>Lifestyle Photography</h3><p>Show your product in a home, kitchen or outdoor setting so shoppers can picture it in their own lives.</p></div>
+        <div class="feature-card"><div class="feature-icon">▣</div><h3>Marketing Creatives</h3><p>Generate sale banners and social-ready visuals sized for the platform you're posting to.</p></div>
+        <div class="feature-card"><div class="feature-icon">▤</div><h3>Product Campaigns</h3><p>Turn one photo into a five-shot campaign: hero, lifestyle, social, promotional and editorial angles.</p></div>
+        <div class="feature-card"><div class="feature-icon">◈</div><h3>Brand Consistency</h3><p>Save your brand name, colors and tone once, and reuse them across every generation.</p></div>
+        <div class="feature-card"><div class="feature-icon">▦</div><h3>Multiple Variations</h3><p>Generate a handful of alternate takes on the same brief and pick the one that fits best.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how-it-works">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>From photo to store-ready in four steps.</h2>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><h3>Upload</h3><p>Add a photo of your product from your phone or computer.</p></div>
+        <div class="step"><div class="step-num">2</div><h3>Customize</h3><p>Pick a style, background, lighting and composition — or write your own scene.</p></div>
+        <div class="step"><div class="step-num">3</div><h3>Generate</h3><p>ProductForge sends your product to an AI image model and builds the new scene around it.</p></div>
+        <div class="step"><div class="step-num">4</div><h3>Download</h3><p>Save the result and use it wherever you sell.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="use-cases">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Built for wherever you list your products.</h2>
+        <p>ProductForge is an independent tool and isn't affiliated with the platforms below — it simply produces visuals sized and styled for them.</p>
+      </div>
+      <div class="chips-row">
+        <span class="usecase-chip">Marketplace listings</span>
+        <span class="usecase-chip">Storefront pages</span>
+        <span class="usecase-chip">Social media posts</span>
+        <span class="usecase-chip">Paid ads</span>
+        <span class="usecase-chip">Print catalogues</span>
+        <span class="usecase-chip">Email campaigns</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="before-after">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>See the difference, side by side.</h2>
+        <p>Drag the handle to compare an original upload against a generated scene.</p>
+      </div>
+      <div class="compare" id="landing-compare">
+        <div class="compare-layer compare-before">Original photo</div>
+        <div class="compare-layer compare-after" id="landing-compare-after">AI-generated scene</div>
+        <div class="compare-handle" id="landing-compare-handle"></div>
+        <span class="compare-tag left">Before</span>
+        <span class="compare-tag right">After</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="campaign">
+    <div class="wrap">
+      <div class="campaign-band">
+        <div>
+          <span class="eyebrow-tag">Product Campaign</span>
+          <h2 style="font-size:28px;">One product, a full campaign.</h2>
+          <p style="color:var(--text-dim); margin-top:14px;">Generate a hero shot, a lifestyle scene, a social creative, a promotional visual and an editorial shot from a single upload — each built on its own AI generation from your free daily allowance.</p>
+          <a href="#/studio" class="btn btn-primary btn-sm" style="margin-top:20px;">Try Campaign Mode</a>
+        </div>
+        <div class="campaign-visual">
+          <div class="campaign-tile"></div><div class="campaign-tile"></div><div class="campaign-tile"></div>
+          <div class="campaign-tile"></div><div class="campaign-tile"></div><div class="campaign-tile"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="final-cta" id="about">
+    <div class="wrap">
+      <h2>Create Your First Product Visual</h2>
+      <p style="color:var(--text-dim); margin-top:14px;">No account, no subscription — generation runs on Cloudflare's free AI allocation.</p>
+      <a href="#/studio" class="btn btn-primary">Start Creating</a>
+    </div>
+  </section>
+
+  <footer class="wrap">
+    <span>ProductForge — an independent AI product photography tool.</span>
+    <span>Built on Cloudflare Pages, Workers &amp; Workers AI.</span>
+  </footer>
+</main>
+
+<!-- ===================== STUDIO ===================== -->
+<main id="view-studio" class="view">
+  <div class="studio-shell">
+
+    <aside class="studio-controls">
+      <div class="ctrl-group">
+        <label class="title">Product photo</label>
+        <div class="upload-area" id="upload-area">
+          <p><strong>Upload Product Photo</strong><br>Drag &amp; drop or tap to choose — PNG, JPG or WEBP</p>
+          <div class="upload-meta" id="upload-meta">No image selected</div>
+        </div>
+        <input type="file" id="file-input" accept="image/png,image/jpeg,image/webp" hidden>
+      </div>
+
+      <div class="ctrl-group">
+        <label class="title">Style</label>
+        <select id="style-select">
+          <optgroup label="Showcase">
+            <option value="clean-studio">Clean Studio</option>
+            <option value="luxury">Luxury</option>
+            <option value="minimal">Minimal</option>
+            <option value="premium">Premium</option>
+            <option value="editorial">Editorial</option>
+          </optgroup>
+          <optgroup label="Lifestyle">
+            <option value="modern-home">Modern Home</option>
+            <option value="kitchen">Kitchen</option>
+            <option value="office">Office</option>
+            <option value="outdoor">Outdoor</option>
+            <option value="natural-lifestyle">Natural Lifestyle</option>
+          </optgroup>
+          <optgroup label="Marketing">
+            <option value="sale-creative">Sale Creative</option>
+            <option value="social-media">Social Media</option>
+            <option value="hero-banner">Hero Banner</option>
+            <option value="premium-advertisement">Premium Advertisement</option>
+            <option value="seasonal">Seasonal</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="ctrl-group">
+        <label class="title">Background</label>
+        <select id="background-select">
+          <option value="pure-white">Pure White</option>
+          <option value="soft-grey">Soft Grey</option>
+          <option value="marble">Marble</option>
+          <option value="concrete">Concrete</option>
+          <option value="wood">Wood</option>
+          <option value="luxury-interior">Luxury Interior</option>
+          <option value="modern-studio">Modern Studio</option>
+          <option value="nature">Nature</option>
+          <option value="kitchen">Kitchen</option>
+          <option value="office">Office</option>
+          <option value="custom">Custom…</option>
+        </select>
+        <input type="text" id="custom-background" placeholder="Describe the background" style="margin-top:8px; display:none;" maxlength="120">
+      </div>
+
+      <div class="ctrl-group">
+        <label class="title">Lighting</label>
+        <select id="lighting-select">
+          <option value="softbox">Softbox</option>
+          <option value="natural">Natural Light</option>
+          <option value="dramatic">Dramatic</option>
+          <option value="golden-hour">Golden Hour</option>
+          <option value="high-key">High Key</option>
+          <option value="low-key">Low Key</option>
+          <option value="studio">Studio</option>
+          <option value="cinematic">Cinematic</option>
+        </select>
+      </div>
+
+      <div class="ctrl-group">
+        <label class="title">Position</label>
+        <div class="option-grid" id="position-options">
+          <button type="button" class="option-pill active" data-value="center">Centered</button>
+          <button type="button" class="option-pill" data-value="left">Left</button>
+          <button type="button" class="option-pill" data-value="right">Right</button>
+          <button type="button" class="option-pill" data-value="close-up">Close-up</button>
+          <button type="button" class="option-pill" data-value="wide">Wide Scene</button>
+          <button type="button" class="option-pill" data-value="hero">Hero Product</button>
+        </div>
+      </div>
+
+      <div class="ctrl-group">
+        <label class="title">Aspect ratio</label>
+        <div class="option-grid" id="aspect-options">
+          <button type="button" class="option-pill active" data-value="1:1">1:1</button>
+          <button type="button" class="option-pill" data-value="4:5">4:5</button>
+          <button type="button" class="option-pill" data-value="3:4">3:4</button>
+          <button type="button" class="option-pill" data-value="16:9">16:9</button>
+          <button type="button" class="option-pill" data-value="9:16">9:16</button>
+        </div>
+      </div>
+
+      <div class="ctrl-group">
+        <label class="title">Custom prompt (optional)</label>
+        <textarea id="custom-prompt" maxlength="400" placeholder="Describe your scene…"></textarea>
+        <div class="char-count"><span id="prompt-count">0</span>/400</div>
+      </div>
+
+      <div class="ctrl-group">
+        <label class="title">Brand kit</label>
+        <input type="text" id="brand-name" placeholder="Brand name" style="margin-bottom:8px;" maxlength="60">
+        <input type="text" id="brand-tagline" placeholder="Tagline" style="margin-bottom:8px;" maxlength="80">
+        <div class="field-row">
+          <input type="color" id="brand-primary" value="#C97D3E" title="Primary color">
+          <input type="color" id="brand-secondary" value="#5C8A85" title="Secondary color">
+          <select id="brand-tone" style="flex:1;">
+            <option value="">Tone (optional)</option>
+            <option value="premium and minimal">Premium &amp; minimal</option>
+            <option value="warm and friendly">Warm &amp; friendly</option>
+            <option value="bold and energetic">Bold &amp; energetic</option>
+            <option value="natural and organic">Natural &amp; organic</option>
+          </select>
+        </div>
+        <div class="small-note">Saved on this device and reused in future generations.</div>
+      </div>
+
+      <div class="ctrl-group">
+        <label class="title">Backend</label>
+        <input type="text" id="api-base-url" placeholder="https://your-worker.workers.dev">
+        <div class="small-note">Your Cloudflare Worker URL. Saved on this device.</div>
+      </div>
+    </aside>
+
+    <section class="studio-main">
+      <div class="usage-badge" id="usage-badge"><span class="usage-dot" id="usage-dot"></span><span id="usage-text">Checking free AI capacity…</span></div>
+
+      <div class="tabbar">
+        <button class="tab-btn active" data-tab="generate">Generate</button>
+        <button class="tab-btn" data-tab="variations">Variations</button>
+        <button class="tab-btn" data-tab="campaign">Campaign</button>
+        <button class="tab-btn" data-tab="history">History</button>
+      </div>
+
+      <!-- Generate tab -->
+      <div class="tab-panel" id="tab-generate">
+        <div class="preview-panel" id="preview-panel">
+          <p class="preview-empty">Upload a product photo, choose your settings, then generate to see the AI-created scene here.</p>
+        </div>
+        <div class="result-actions" id="result-actions" style="display:none;">
+          <button class="btn btn-primary btn-sm" id="btn-generate">Generate Image</button>
+          <button class="btn btn-ghost btn-sm" id="btn-download" style="display:none;">Download</button>
+          <button class="btn btn-ghost btn-sm" id="btn-regenerate" style="display:none;">Generate Again</button>
+          <button class="btn btn-ghost btn-sm" id="btn-compare-toggle" style="display:none;">Compare</button>
+        </div>
+        <div style="margin-top:16px;">
+          <button class="btn btn-primary" id="btn-generate-main">Generate Image</button>
+        </div>
+      </div>
+
+      <!-- Variations tab -->
+      <div class="tab-panel" id="tab-variations" style="display:none;">
+        <p style="color:var(--text-dim); font-size:14px;">Generates 4 separate AI images from the current settings. This uses 4 requests from your free daily allowance.</p>
+        <button class="btn btn-primary btn-sm" id="btn-variations" style="margin-top:14px;">Generate 4 Variations</button>
+        <div class="gallery" id="variations-gallery"></div>
+      </div>
+
+      <!-- Campaign tab -->
+      <div class="tab-panel" id="tab-campaign" style="display:none;">
+        <p style="color:var(--text-dim); font-size:14px;">Creates 5 AI images from your free daily allowance: Hero Shot, Lifestyle Scene, Social Media Creative, Promotional Visual and Editorial Scene.</p>
+        <button class="btn btn-primary btn-sm" id="btn-campaign" style="margin-top:14px;">Start Campaign</button>
+        <div class="gallery" id="campaign-gallery"></div>
+      </div>
+
+      <!-- History tab -->
+      <div class="tab-panel" id="tab-history" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <p style="color:var(--text-dim); font-size:14px;">Your last 20 generations, saved on this device.</p>
+          <button class="btn btn-ghost btn-sm" id="btn-clear-history">Clear History</button>
+        </div>
+        <div class="history-list" id="history-list"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- Routing ---------------- */
+  const views = { "/": document.getElementById("view-landing"), "/studio": document.getElementById("view-studio") };
+  function route(){
+    const hash = (location.hash || "#/").slice(1) || "/";
+    const path = hash.startsWith("/studio") ? "/studio" : "/";
+    Object.values(views).forEach(v => v.classList.remove("active"));
+    views[path].classList.add("active");
+    window.scrollTo(0,0);
+    if (path === "/studio") refreshUsage();
+  }
+  window.addEventListener("hashchange", route);
+  route();
+
+  /* ---------------- Toast ---------------- */
+  const toastEl = document.getElementById("toast");
+  let toastTimer;
+  function toast(msg, isError){
+    toastEl.textContent = msg;
+    toastEl.classList.toggle("error", !!isError);
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=> toastEl.classList.remove("show"), 3600);
+  }
+
+  /* ---------------- Hero 3D parallax ---------------- */
+  const stage = document.getElementById("hero-stage");
+  const stageCard = document.getElementById("stage-card");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (stage && !reduceMotion && window.innerWidth > 900) {
+    stage.addEventListener("mousemove", (e)=>{
+      const rect = stage.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      stageCard.style.transform = `rotateY(${x*22}deg) rotateX(${-y*22}deg)`;
+    });
+    stage.addEventListener("mouseleave", ()=>{ stageCard.style.transform = "rotateY(0deg) rotateX(0deg)"; });
+  }
+
+  /* ---------------- Landing before/after drag ---------------- */
+  (function(){
+    const box = document.getElementById("landing-compare");
+    const after = document.getElementById("landing-compare-after");
+    const handle = document.getElementById("landing-compare-handle");
+    if (!box) return;
+    let dragging = false;
+    function setPct(clientX){
+      const rect = box.getBoundingClientRect();
+      let pct = ((clientX - rect.left) / rect.width) * 100;
+      pct = Math.max(0, Math.min(100, pct));
+      after.style.clipPath = `inset(0 ${100-pct}% 0 0)`;
+      handle.style.left = pct + "%";
+    }
+    handle.addEventListener("pointerdown", ()=> dragging = true);
+    window.addEventListener("pointerup", ()=> dragging = false);
+    window.addEventListener("pointermove", (e)=>{ if(dragging) setPct(e.clientX); });
+    box.addEventListener("click", (e)=> setPct(e.clientX));
+  })();
+
+  /* ---------------- Studio state ---------------- */
+  const state = {
+    imageBase64: null,      // resized, no data: prefix
+    imageMime: "image/png",
+    imageDataUrl: null,     // full data url for preview
+    position: "center",
+    aspectRatio: "1:1",
+    generating: false,
+    lastResult: null,
+  };
+
+  const $ = (id)=> document.getElementById(id);
+
+  /* Persisted settings */
+  const savedApiUrl = localStorage.getItem("pf_api_base_url");
+  if (savedApiUrl) $("api-base-url").value = savedApiUrl;
+  $("api-base-url").addEventListener("change", (e)=> localStorage.setItem("pf_api_base_url", e.target.value.trim()));
+
+  const brandFields = ["brand-name","brand-tagline","brand-primary","brand-secondary","brand-tone"];
+  brandFields.forEach(id=>{
+    const saved = localStorage.getItem("pf_"+id);
+    if (saved !== null) $(id).value = saved;
+    $(id).addEventListener("change", (e)=> localStorage.setItem("pf_"+id, e.target.value));
+  });
+
+  function getApiBase(){
+    return ($("api-base-url").value || "").trim().replace(/\/$/,"");
+  }
+
+  /* ---------------- Usage indicator ---------------- */
+  async function refreshUsage(){
+    const base = getApiBase();
+    const dot = $("usage-dot"), text = $("usage-text");
+    if (!base){
+      dot.classList.add("limited");
+      text.textContent = "Set your Worker URL below to enable generation.";
+      return;
+    }
+    try{
+      const res = await fetch(base + "/api/status");
+      if (!res.ok) throw new Error();
+      dot.classList.remove("limited");
+      text.textContent = "Free AI capacity applies · Cloudflare Workers AI";
+    }catch{
+      dot.classList.add("limited");
+      text.textContent = "Backend unreachable — check your Worker URL.";
+    }
+  }
+
+  /* ---------------- Upload + client-side resize ---------------- */
+  const uploadArea = $("upload-area");
+  const fileInput = $("file-input");
+  uploadArea.addEventListener("click", ()=> fileInput.click());
+  uploadArea.addEventListener("dragover", (e)=>{ e.preventDefault(); uploadArea.classList.add("drag"); });
+  uploadArea.addEventListener("dragleave", ()=> uploadArea.classList.remove("drag"));
+  uploadArea.addEventListener("drop", (e)=>{
+    e.preventDefault(); uploadArea.classList.remove("drag");
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener("change", (e)=>{ if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+  const MAX_UPLOAD_BYTES = 12 * 1024 * 1024;
+  function handleFile(file){
+    if (!["image/png","image/jpeg","image/jpg","image/webp"].includes(file.type)){
+      toast("Unsupported image format.", true); return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES){
+      toast("Image is too large.", true); return;
+    }
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onload = ()=>{
+        // Resize so the longest side is <=512px (model requirement for reference images).
+        const MAX = 512;
+        let { width, height } = img;
+        const scale = Math.min(1, MAX / Math.max(width, height));
+        const w = Math.round(width * scale), h = Math.round(height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL("image/png");
+        state.imageDataUrl = dataUrl;
+        state.imageBase64 = dataUrl.split(",")[1];
+        state.imageMime = "image/png";
+        $("upload-meta").textContent = `${file.name} · ${(file.size/1024).toFixed(0)} KB · ${width}×${height}px (resized to ${w}×${h} for AI reference)`;
+        renderPreviewOriginal(dataUrl);
+        toast("Product photo ready.");
+      };
+      img.onerror = ()=> toast("Could not read this image.", true);
+      img.src = reader.result;
+    };
+    reader.onerror = ()=> toast("Could not read this file.", true);
+    reader.readAsDataURL(file);
+  }
+
+  function renderPreviewOriginal(dataUrl){
+    const panel = $("preview-panel");
+    panel.innerHTML = `<img src="${dataUrl}" alt="Uploaded product photo">`;
+    $("result-actions").style.display = "flex";
+    $("btn-download").style.display = "none";
+    $("btn-regenerate").style.display = "none";
+    $("btn-compare-toggle").style.display = "none";
+  }
+
+  /* ---------------- Option pills ---------------- */
+  function wirePillGroup(containerId, stateKey){
+    const container = $(containerId);
+    container.querySelectorAll(".option-pill").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        container.querySelectorAll(".option-pill").forEach(b=> b.classList.remove("active"));
+        btn.classList.add("active");
+        state[stateKey] = btn.dataset.value;
+      });
+    });
+  }
+  wirePillGroup("position-options", "position");
+  wirePillGroup("aspect-options", "aspectRatio");
+
+  $("background-select").addEventListener("change", (e)=>{
+    $("custom-background").style.display = e.target.value === "custom" ? "block" : "none";
+  });
+
+  $("custom-prompt").addEventListener("input", (e)=>{
+    $("prompt-count").textContent = e.target.value.length;
+  });
+
+  /* ---------------- Build request payload ---------------- */
+  function buildPayload(extraPrompt){
+    return {
+      image: state.imageBase64,
+      mimeType: state.imageMime,
+      style: $("style-select").value,
+      background: $("background-select").value,
+      customBackground: $("custom-background").value,
+      lighting: $("lighting-select").value,
+      position: state.position,
+      aspectRatio: state.aspectRatio,
+      customPrompt: [$("custom-prompt").value, extraPrompt].filter(Boolean).join(". "),
+      brand: {
+        name: $("brand-name").value,
+        tagline: $("brand-tagline").value,
+        primaryColor: $("brand-primary").value,
+        secondaryColor: $("brand-secondary").value,
+        tone: $("brand-tone").value,
+      }
+    };
+  }
+
+  async function callGenerate(extraPrompt){
+    const base = getApiBase();
+    if (!base){ throw { message: "Set your Worker URL first." }; }
+    const res = await fetch(base + "/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buildPayload(extraPrompt)),
+    });
+    let data;
+    try{ data = await res.json(); }catch{ data = {}; }
+    if (!res.ok){ throw { message: data.error || "Generation failed. Please try again.", status: res.status }; }
+    return data;
+  }
+
+  /* ---------------- History (localStorage, capped at 20) ---------------- */
+  const HISTORY_KEY = "pf_history";
+  function getHistory(){ try{ return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); }catch{ return []; } }
+  function saveHistoryEntry(entry){
+    const list = getHistory();
+    list.unshift(entry);
+    while (list.length > 20) list.pop();
+    try{ localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); }
+    catch{ /* storage full — drop silently, history is best-effort */ }
+    renderHistory();
+  }
+  function renderHistory(){
+    const list = getHistory();
+    const container = $("history-list");
+    if (!list.length){ container.innerHTML = '<p class="small-note">No generations yet.</p>'; return; }
+    container.innerHTML = list.map((item, i)=>`
+      <div class="history-row">
+        <img src="${item.image}" alt="">
+        <div class="info">${item.style || "generation"} · ${new Date(item.timestamp).toLocaleString()}</div>
+        <div class="row-actions">
+          <button class="icon-btn" data-open="${i}">Open</button>
+          <button class="icon-btn" data-download="${i}">Download</button>
+          <button class="icon-btn" data-delete="${i}">Delete</button>
+        </div>
+      </div>
+    `).join("");
+    container.querySelectorAll("[data-open]").forEach(b=> b.addEventListener("click", ()=> showResult(getHistory()[+b.dataset.open].image)));
+    container.querySelectorAll("[data-download]").forEach(b=> b.addEventListener("click", ()=> downloadImage(getHistory()[+b.dataset.download].image)));
+    container.querySelectorAll("[data-delete]").forEach(b=> b.addEventListener("click", ()=>{
+      const list = getHistory(); list.splice(+b.dataset.delete, 1);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+      renderHistory();
+    }));
+  }
+  $("btn-clear-history").addEventListener("click", ()=>{
+    if (confirm("Clear all saved history on this device?")){
+      localStorage.removeItem(HISTORY_KEY); renderHistory();
+    }
+  });
+  renderHistory();
+
+  function downloadImage(dataUrl){
+    const a = document.createElement("a");
+    const stamp = new Date().toISOString().slice(0,16).replace(/[-:T]/g,"").replace(":","");
+    a.href = dataUrl;
+    a.download = `productforge-generated-${stamp}.png`;
+    a.click();
+  }
+
+  /* ---------------- Result rendering ---------------- */
+  function showResult(dataUrl){
+    const panel = $("preview-panel");
+    panel.innerHTML = `<img src="${dataUrl}" alt="Generated product image">`;
+    $("btn-download").style.display = "inline-flex";
+    $("btn-regenerate").style.display = "inline-flex";
+    $("btn-compare-toggle").style.display = state.imageDataUrl ? "inline-flex" : "none";
+    $("btn-download").onclick = ()=> downloadImage(dataUrl);
+    state.lastResult = dataUrl;
+  }
+
+  function showCompareSlider(){
+    if (!state.imageDataUrl || !state.lastResult) return;
+    const panel = $("preview-panel");
+    panel.innerHTML = `
+      <div class="studio-compare-slider">
+        <img src="${state.imageDataUrl}" alt="Original">
+        <div class="after-wrap" id="studio-after-wrap"><img src="${state.lastResult}" alt="Generated"></div>
+      </div>
+      <input type="range" class="studio-compare-range" min="0" max="100" value="50" id="studio-compare-range">
+    `;
+    const wrap = $("studio-after-wrap");
+    $("studio-compare-range").addEventListener("input", (e)=>{
+      wrap.style.clipPath = `inset(0 ${100-e.target.value}% 0 0)`;
+    });
+  }
+  $("btn-compare-toggle").addEventListener("click", showCompareSlider);
+
+  function setProgress(label){
+    $("preview-panel").innerHTML = `<div class="progress-wrap"><div class="spinner"></div><p class="preview-empty">${label}</p></div>`;
+  }
+
+  function requireImage(){
+    if (!state.imageBase64){ toast("Please upload a product image first.", true); return false; }
+    return true;
+  }
+
+  /* ---------------- Single generate ---------------- */
+  async function runGenerate(){
+    if (state.generating) return;
+    if (!requireImage()) return;
+    state.generating = true;
+    $("btn-generate-main").disabled = true;
+    setProgress("Preparing product…");
+    try{
+      await new Promise(r=> setTimeout(r, 300));
+      setProgress("Generating your image…");
+      const data = await callGenerate();
+      showResult(data.image);
+      saveHistoryEntry({ image: data.image, style: $("style-select").value, timestamp: Date.now() });
+      toast("Image generated.");
+    }catch(err){
+      $("preview-panel").innerHTML = `<p class="preview-empty">${(err && err.message) || "Generation failed. Please try again."}</p>`;
+      toast((err && err.message) || "Generation failed.", true);
+    }finally{
+      state.generating = false;
+      $("btn-generate-main").disabled = false;
+    }
+  }
+  $("btn-generate-main").addEventListener("click", runGenerate);
+  $("btn-generate").addEventListener("click", runGenerate);
+  $("btn-regenerate").addEventListener("click", runGenerate);
+
+  /* ---------------- Variations ---------------- */
+  $("btn-variations").addEventListener("click", async ()=>{
+    if (!requireImage()) return;
+    if (!confirm("This will use 4 AI generations from your free daily allowance. Continue?")) return;
+    const gallery = $("variations-gallery");
+    gallery.innerHTML = "";
+    const angles = ["subtle alternate camera angle", "slightly different composition", "alternate lighting mood", "alternate background framing"];
+    for (let i=0;i<4;i++){
+      const cell = document.createElement("div");
+      cell.className = "gallery-item";
+      cell.innerHTML = `<div style="aspect-ratio:1; display:flex; align-items:center; justify-content:center; color:var(--text-faint); font-size:12px;">Generating…</div>`;
+      gallery.appendChild(cell);
+      try{
+        const data = await callGenerate(angles[i]);
+        cell.innerHTML = `<img src="${data.image}" alt="Variation ${i+1}"><div class="meta"><span>Variation ${i+1}</span></div>`;
+        saveHistoryEntry({ image: data.image, style: $("style-select").value + " variation", timestamp: Date.now() });
+      }catch(err){
+        cell.innerHTML = `<div style="aspect-ratio:1; display:flex; align-items:center; justify-content:center; color:var(--danger); font-size:12px; padding:8px; text-align:center;">${(err && err.message) || "Failed"}</div>`;
+      }
+    }
+  });
+
+  /* ---------------- Campaign ---------------- */
+  $("btn-campaign").addEventListener("click", async ()=>{
+    if (!requireImage()) return;
+    if (!confirm("This creates 5 AI images from your free daily allowance. Continue?")) return;
+    const gallery = $("campaign-gallery");
+    gallery.innerHTML = "";
+    const concepts = [
+      { label: "Hero Product Shot", prompt: "dramatic hero product shot, centered, premium studio lighting" },
+      { label: "Lifestyle Scene", prompt: "natural lifestyle scene showing the product in everyday use" },
+      { label: "Social Media Creative", prompt: "square social-media-ready creative, vibrant and eye-catching" },
+      { label: "Promotional Visual", prompt: "bold promotional visual with energetic composition" },
+      { label: "Editorial Scene", prompt: "editorial magazine-style product photography" },
+    ];
+    for (const concept of concepts){
+      const cell = document.createElement("div");
+      cell.className = "gallery-item";
+      cell.innerHTML = `<div style="aspect-ratio:1; display:flex; align-items:center; justify-content:center; color:var(--text-faint); font-size:12px;">Generating ${concept.label}…</div>`;
+      gallery.appendChild(cell);
+      try{
+        const data = await callGenerate(concept.prompt);
+        cell.innerHTML = `<img src="${data.image}" alt="${concept.label}"><div class="meta"><span>${concept.label}</span></div>`;
+        saveHistoryEntry({ image: data.image, style: concept.label, timestamp: Date.now() });
+      }catch(err){
+        cell.innerHTML = `<div style="aspect-ratio:1; display:flex; align-items:center; justify-content:center; color:var(--danger); font-size:12px; padding:8px; text-align:center;">${concept.label} failed: ${(err && err.message) || "error"}</div>`;
+      }
+    }
+  });
+
+  /* ---------------- Tabs ---------------- */
+  document.querySelectorAll(".tab-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      document.querySelectorAll(".tab-btn").forEach(b=> b.classList.remove("active"));
+      btn.classList.add("active");
+      ["generate","variations","campaign","history"].forEach(t=>{
+        $("tab-"+t).style.display = (t === btn.dataset.tab) ? "block" : "none";
+      });
+    });
+  });
+
+})();
+</script>
+</body>
+</html>

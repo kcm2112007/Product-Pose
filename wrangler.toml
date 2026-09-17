@@ -1,0 +1,13 @@
+name = "productforge-api"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+# Workers AI binding — no API key needed, this is the native free-tier binding.
+[ai]
+binding = "AI"
+
+# Comma-separated list of origins allowed to call this Worker.
+# Set this to your real Cloudflare Pages URL once deployed, e.g.
+# "https://productforge.pages.dev". Use "*" only for local testing.
+[vars]
+ALLOWED_ORIGIN = "*"
